@@ -20,7 +20,6 @@ export default function Home() {
   const [isRecordingListName, setIsRecordingListName] = useState(false);
   const [modelLoading, setModelLoading] = useState(true);
   const [modelReady, setModelReady] = useState(false);
-  const [micPermissionGranted, setMicPermissionGranted] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const pressTimer = useRef<NodeJS.Timeout | null>(null);
   const mediaRecorder = useRef<MediaRecorder | null>(null);
@@ -129,7 +128,6 @@ export default function Home() {
         navigator.mediaDevices
           .getUserMedia({ audio: true })
           .then((stream) => {
-            setMicPermissionGranted(true);
             // Stop the stream immediately since we only needed permission
             stream.getTracks().forEach((track) => track.stop());
           })

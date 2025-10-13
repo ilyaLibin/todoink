@@ -14,6 +14,7 @@ async function loadModel() {
       "Xenova/whisper-tiny.en",
       {
         // Progress callback to track model download
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         progress_callback: (progress: any) => {
           if (progress.status === "progress") {
             const percent = Math.round((progress.loaded / progress.total) * 100);
