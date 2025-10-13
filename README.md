@@ -1,40 +1,21 @@
 # TodoInk - E-Ink Style Voice Todo List
 
-A minimalist todo list application with an e-ink aesthetic and voice input powered by local AI transcription. Built as a prototype for an e-ink device interface.
+A prototype of an e-ink todo device with voice input powered by local AI transcription. This web interface simulates the physical device experience with button interactions and monochrome display aesthetics.
 
 ![TodoInk Screenshot](screenshot.png)
 
-## Features
 
-### Voice Input
-- **Long-press to record** - Hold any side button and speak to add/edit items
-- **Local AI transcription** - Uses Whisper Tiny model running entirely in your browser
-- **Fast & private** - No API calls, audio never leaves your device
-- **Visual feedback** - Recording light indicator and success animations
-
-### Interface
-- **E-ink inspired design** - Clean, monochrome interface optimized for e-ink displays
-- **Multiple lists** - Navigate between different todo lists with arrow buttons
-- **Physical buttons simulation** - 13 side buttons for quick task interactions
-- **Progress tracking** - Summary bar showing completed items
-
-### Interactions
+## Interactions
 - **Single click** - Toggle item completion
 - **Double click** - Delete item
 - **Long press** - Record voice to add/edit item
 - **Arrow buttons** - Switch between lists
 
 ## Tech Stack
-
-- **Frontend**: [Next.js 15](https://nextjs.org) with React 19
-- **Styling**: [Tailwind CSS 4](https://tailwindcss.com)
 - **AI Transcription**: [Transformers.js](https://huggingface.co/docs/transformers.js) with Whisper Tiny
 - **Audio Processing**: Web Audio API
-- **State Management**: React Hooks + localStorage
-- **Build Tool**: Turbopack
 
 ## How It Works
-
 1. **Model Preloading** - Whisper AI model loads automatically on page load with progress indicator
 2. **Microphone Permission** - Browser requests mic access upfront for seamless recording
 3. **Voice Recording** - Long-press triggers MediaRecorder API to capture audio
