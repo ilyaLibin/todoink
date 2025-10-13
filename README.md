@@ -57,26 +57,6 @@ npm start
 5. **Release** - Let go to transcribe and add the item
 6. **Manage Tasks** - Click to complete, double-click to delete
 
-## Key Features
-
-### Privacy First
-- ✅ 100% local processing
-- ✅ No API keys required
-- ✅ No data sent to servers
-- ✅ Works offline after initial model download
-
-### Performance
-- ✅ Fast transcription (~2-3 seconds)
-- ✅ Non-blocking UI with Web Workers
-- ✅ Optimized model size (Whisper Tiny)
-- ✅ Efficient audio processing
-
-### User Experience
-- ✅ Real-time loading progress
-- ✅ Clear visual feedback
-- ✅ Persistent data (localStorage)
-- ✅ Responsive design
-
 ## Inspiration & References
 
 E-ink todo list projects:
