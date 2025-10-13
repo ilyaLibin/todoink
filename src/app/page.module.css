@@ -416,10 +416,24 @@
 .logoContainer {
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.logoLeft {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.logoRight {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: auto;
 }
 
 .logo {
-  margin-right: 8px;
   color: #333;
 }
 
@@ -427,6 +441,55 @@
   font-size: 1.2rem;
   font-weight: 700;
   letter-spacing: -0.05em;
+  color: #333;
+}
+
+.githubLink {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #333;
+  transition: color 0.2s ease, transform 0.2s ease;
+  padding: 4px;
+  border-radius: 4px;
+}
+
+.githubLink:hover {
+  color: #000;
+  transform: scale(1.1);
+}
+
+.githubLink:active {
+  transform: scale(0.95);
+}
+
+.githubStars {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #333;
+  text-decoration: none;
+  font-family: monospace;
+  font-size: 0.9rem;
+  padding: 4px 8px;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+.githubStars:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+  border-color: rgba(0, 0, 0, 0.3);
+  transform: translateY(-1px);
+}
+
+.githubStars:active {
+  transform: translateY(0);
+}
+
+.starCount {
+  font-weight: 600;
   color: #333;
 }
 
