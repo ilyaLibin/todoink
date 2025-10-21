@@ -501,8 +501,6 @@ export default function MusicSquare() {
 
   return (
     <main className={styles.container}>
-      <h1 className={styles.title}>Music Sequencer</h1>
-
       <div className={styles.content}>
         <div className={styles.controlsWrapper}>
           <div className={styles.controlSection}>
