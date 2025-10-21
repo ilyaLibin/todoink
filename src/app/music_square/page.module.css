@@ -82,66 +82,45 @@
   box-shadow: 0 0 15px rgba(78, 205, 196, 0.5);
 }
 
-.playStopButton {
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  background: #ff6b6b;
-  border: 3px solid #ff6b6b;
-  color: #000;
-  font-size: 1.5rem;
+.canvasControls {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  justify-content: center;
+}
+
+.canvasControlButton {
+  width: 40px;
+  height: 40px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid #333;
+  color: #4ecdc4;
+  font-size: 1.25rem;
   font-weight: bold;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.2s ease;
-  box-shadow: 0 0 15px rgba(255, 107, 107, 0.5);
   line-height: 1;
 }
 
-.playStopButton:hover:not(:disabled) {
-  background: #ff8787;
-  transform: scale(1.1);
-  box-shadow: 0 0 25px rgba(255, 107, 107, 0.8);
+.canvasControlButton:hover:not(:disabled) {
+  background: rgba(78, 205, 196, 0.1);
+  border-color: #4ecdc4;
+  color: #4ecdc4;
+  box-shadow: 0 0 10px rgba(78, 205, 196, 0.3);
 }
 
-.playStopButton:active:not(:disabled) {
+.canvasControlButton:active:not(:disabled) {
   transform: scale(0.95);
+  background: rgba(78, 205, 196, 0.2);
 }
 
-.playStopButton:disabled {
+.canvasControlButton:disabled {
   opacity: 0.3;
   cursor: not-allowed;
-}
-
-.addButton {
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  background: #4ecdc4;
-  border: 3px solid #4ecdc4;
-  color: #000;
-  font-size: 2.5rem;
-  font-weight: bold;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-  box-shadow: 0 0 15px rgba(78, 205, 196, 0.5);
-  line-height: 1;
-  padding-bottom: 4px;
-}
-
-.addButton:hover {
-  background: #5fddd4;
-  transform: scale(1.1);
-  box-shadow: 0 0 25px rgba(78, 205, 196, 0.8);
-}
-
-.addButton:active {
-  transform: scale(0.95);
 }
 
 .slider {

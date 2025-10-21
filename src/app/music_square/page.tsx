@@ -60,23 +60,48 @@ export default function MusicSquare() {
   const offsetRef = useRef({ x: 0, y: 0 });
   const activeOscillatorsRef = useRef<Map<number, { osc: OscillatorNode; gain: GainNode }>>(new Map());
 
-  // Initialize boxes with random positions
+  // Initialize boxes with a musical melody pattern
   useEffect(() => {
     const colors = [
       "#ff6b6b", "#f9ca24", "#f0932b", "#6ab04c", "#4ecdc4",
       "#45b7d1", "#a29bfe", "#fd79a8", "#ff85a2", "#ffd93d"
     ];
 
-    const initialBoxes: Box[] = Array.from({ length: 10 }, (_, i) => ({
-      id: i,
-      x: Math.random() * (CANVAS_WIDTH - BOX_SIZE),
-      y: Math.random() * (CANVAS_HEIGHT - LED_HEIGHT - BOX_SIZE),
-      width: BOX_SIZE,
-      height: BOX_SIZE,
-      color: colors[i],
-      isPlaying: false,
-      isBlinking: false,
-    }));
+    // Define a pleasant melody using pentatonic scale
+    // C4, E4, G4, A4, C5, A4, G4, E4, D4, C4
+    const melodyNotes = [
+      { note: "C4", freq: 261.63 },
+      { note: "E4", freq: 329.63 },
+      { note: "G4", freq: 392.00 },
+      { note: "A4", freq: 440.00 },
+      { note: "C5", freq: 523.25 },
+      { note: "A4", freq: 440.00 },
+      { note: "G4", freq: 392.00 },
+      { note: "E4", freq: 329.63 },
+      { note: "D4", freq: 293.66 },
+      { note: "C4", freq: 261.63 },
+    ];
+
+    const initialBoxes: Box[] = melodyNotes.map((noteData, i) => {
+      // Calculate Y position for this note
+      const normalizedFreq = (noteData.freq - MIN_FREQ) / (MAX_FREQ - MIN_FREQ);
+      const noteY = (1 - normalizedFreq) * (CANVAS_HEIGHT - LED_HEIGHT - BOX_SIZE);
+
+      // Spread boxes evenly across X axis
+      const spacing = (CANVAS_WIDTH - BOX_SIZE * 2) / (melodyNotes.length - 1);
+      const x = BOX_SIZE + spacing * i;
+
+      return {
+        id: i,
+        x: x,
+        y: noteY,
+        width: BOX_SIZE,
+        height: BOX_SIZE,
+        color: colors[i],
+        isPlaying: false,
+        isBlinking: false,
+      };
+    });
 
     setBoxes(initialBoxes);
   }, []);
@@ -481,24 +506,6 @@ export default function MusicSquare() {
       <div className={styles.content}>
         <div className={styles.controlsWrapper}>
           <div className={styles.controlSection}>
-            <label className={styles.label}>Playback</label>
-            <button
-              className={styles.playStopButton}
-              onClick={togglePlayStop}
-              disabled={!isStarted}
-            >
-              {isPlaying ? "■" : "▶"}
-            </button>
-          </div>
-
-          <div className={styles.controlSection}>
-            <label className={styles.label}>Add Box</label>
-            <button className={styles.addButton} onClick={addNewBox}>
-              +
-            </button>
-          </div>
-
-          <div className={styles.controlSection}>
             <label className={styles.label}>Instrument</label>
             <div className={styles.buttonGroup}>
               <button
@@ -573,8 +580,27 @@ export default function MusicSquare() {
             </div>
           )}
         </div>
+
+        <div className={styles.canvasControls}>
+          <button
+            className={styles.canvasControlButton}
+            onClick={togglePlayStop}
+            disabled={!isStarted}
+            title={isPlaying ? "Stop" : "Play"}
+          >
+            {isPlaying ? "■" : "▶"}
+          </button>
+          <button
+            className={styles.canvasControlButton}
+            onClick={addNewBox}
+            title="Add Box"
+          >
+            +
+          </button>
+        </div>
+
         <p className={styles.instruction}>
-          Drag boxes around • Higher = Higher pitch • Playhead triggers notes
+          Drag boxes • Higher = Higher pitch • Right-click to delete
         </p>
       </div>
     </main>
