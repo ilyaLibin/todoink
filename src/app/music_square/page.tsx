@@ -58,7 +58,6 @@ export default function MusicSquare() {
   const [noteDuration, setNoteDuration] = useState(1.5);
   const draggedBoxRef = useRef<number | null>(null);
   const offsetRef = useRef({ x: 0, y: 0 });
-  const activeOscillatorsRef = useRef<Map<number, { osc: OscillatorNode; gain: GainNode }>>(new Map());
 
   // Initialize boxes with a musical melody pattern
   useEffect(() => {
@@ -266,6 +265,7 @@ export default function MusicSquare() {
         return box;
       })
     );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [playheadX]);
 
   // Draw canvas
