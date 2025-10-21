@@ -59,40 +59,29 @@ export default function MusicSquare() {
   const draggedBoxRef = useRef<number | null>(null);
   const offsetRef = useRef({ x: 0, y: 0 });
 
-  // Initialize boxes with a musical melody pattern
+  // Initialize boxes with random positions
   useEffect(() => {
     const colors = [
+      "#ff6b6b", "#f9ca24", "#f0932b", "#6ab04c", "#4ecdc4",
+      "#45b7d1", "#a29bfe", "#fd79a8", "#ff85a2", "#ffd93d",
       "#ff6b6b", "#f9ca24", "#f0932b", "#6ab04c", "#4ecdc4",
       "#45b7d1", "#a29bfe", "#fd79a8", "#ff85a2", "#ffd93d"
     ];
 
-    // Define a pleasant melody using pentatonic scale
-    // C4, E4, G4, A4, C5, A4, G4, E4, D4, C4
-    const melodyNotes = [
-      { note: "C4", freq: 261.63 },
-      { note: "E4", freq: 329.63 },
-      { note: "G4", freq: 392.00 },
-      { note: "A4", freq: 440.00 },
-      { note: "C5", freq: 523.25 },
-      { note: "A4", freq: 440.00 },
-      { note: "G4", freq: 392.00 },
-      { note: "E4", freq: 329.63 },
-      { note: "D4", freq: 293.66 },
-      { note: "C4", freq: 261.63 },
-    ];
+    // Filter notes within the frequency range
+    const availableNotes = NOTES.filter(note => note.freq >= MIN_FREQ && note.freq <= MAX_FREQ);
 
-    const initialBoxes: Box[] = melodyNotes.map((noteData, i) => {
+    const initialBoxes: Box[] = Array.from({ length: 20 }, (_, i) => {
+      // Pick a random note
+      const randomNote = availableNotes[Math.floor(Math.random() * availableNotes.length)];
+
       // Calculate Y position for this note
-      const normalizedFreq = (noteData.freq - MIN_FREQ) / (MAX_FREQ - MIN_FREQ);
+      const normalizedFreq = (randomNote.freq - MIN_FREQ) / (MAX_FREQ - MIN_FREQ);
       const noteY = (1 - normalizedFreq) * (CANVAS_HEIGHT - LED_HEIGHT - BOX_SIZE);
-
-      // Spread boxes evenly across X axis
-      const spacing = (CANVAS_WIDTH - BOX_SIZE * 2) / (melodyNotes.length - 1);
-      const x = BOX_SIZE + spacing * i;
 
       return {
         id: i,
-        x: x,
+        x: Math.random() * (CANVAS_WIDTH - BOX_SIZE),
         y: noteY,
         width: BOX_SIZE,
         height: BOX_SIZE,
@@ -276,9 +265,8 @@ export default function MusicSquare() {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    // Clear canvas
-    ctx.fillStyle = "#0a0a0a";
-    ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+    // Clear canvas (transparent)
+    ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
     // Draw grid lines
     ctx.strokeStyle = "#1a1a1a";
