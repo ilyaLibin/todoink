@@ -58,6 +58,7 @@ export default function MusicSquare() {
   const [noteDuration, setNoteDuration] = useState(1.5);
   const draggedBoxRef = useRef<number | null>(null);
   const offsetRef = useRef({ x: 0, y: 0 });
+  const bgMusicRef = useRef<HTMLAudioElement | null>(null);
 
   // Initialize boxes with random positions
   useEffect(() => {
@@ -92,6 +93,14 @@ export default function MusicSquare() {
     });
 
     setBoxes(initialBoxes);
+
+    // Load and prepare background music
+    if (typeof window !== "undefined") {
+      const bgMusic = new Audio("/caffe-sfx.mp3");
+      bgMusic.loop = true;
+      bgMusic.volume = 0.3;
+      bgMusicRef.current = bgMusic;
+    }
   }, []);
 
   // Play note based on Y position
@@ -364,6 +373,13 @@ export default function MusicSquare() {
     audioContextRef.current = new AudioContext();
     setIsStarted(true);
     setIsPlaying(true);
+
+    // Start background music
+    if (bgMusicRef.current) {
+      bgMusicRef.current.play().catch(() => {
+        // Autoplay might be blocked, that's okay
+      });
+    }
   };
 
   // Toggle play/stop
