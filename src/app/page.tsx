@@ -1,5 +1,11 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import styles from "./page.module.css";
+
+export const metadata: Metadata = {
+  title: "Ilya Libin - Projects",
+  description: "Personal projects by Ilya Libin - Interactive web experiments and tools",
+};
 
 export default function Home() {
   return (
