@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import styles from "../app/page.module.css";
+import styles from "./components.module.css";
 
 export const GitHubStars: React.FC = () => {
   const [stars, setStars] = useState<number | null>(null);

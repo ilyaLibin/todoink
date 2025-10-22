@@ -1,5 +1,5 @@
 import React from "react";
-import styles from "../app/page.module.css";
+import styles from "./components.module.css";
 import { GitHubStars } from "./GitHubStars";
 
 export const Logo: React.FC = () => {
