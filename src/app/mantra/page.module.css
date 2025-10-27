@@ -1,0 +1,237 @@
+.main {
+  min-height: 100vh;
+  background-color: #ffffff;
+  color: #000000;
+  font-family: "Courier New", Courier, monospace;
+  padding: 2rem;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 3rem;
+  border-bottom: 2px solid #000000;
+  padding-bottom: 1.5rem;
+}
+
+.title {
+  font-size: 3rem;
+  font-weight: bold;
+  margin: 0;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.subtitle {
+  font-size: 1rem;
+  margin: 0.5rem 0 0 0;
+  opacity: 0.7;
+}
+
+.recordSection {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.recordButton {
+  background-color: #000000;
+  color: #ffffff;
+  border: none;
+  padding: 1.5rem 3rem;
+  font-size: 1.2rem;
+  font-family: "Courier New", Courier, monospace;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  min-width: 250px;
+}
+
+.recordButton:hover:not(:disabled) {
+  background-color: #333333;
+}
+
+.recordButton:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.recordButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.recordButton.recording {
+  background-color: #000000;
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.instruction {
+  margin-top: 1rem;
+  font-size: 0.9rem;
+  opacity: 0.6;
+}
+
+.loadingBar {
+  width: 100%;
+  height: 4px;
+  background-color: #e0e0e0;
+  margin-bottom: 2rem;
+  overflow: hidden;
+}
+
+.loadingProgress {
+  height: 100%;
+  background-color: #000000;
+  transition: width 0.3s ease;
+}
+
+.error {
+  background-color: #000000;
+  color: #ffffff;
+  padding: 1rem;
+  margin-bottom: 2rem;
+  text-align: center;
+  border: 2px solid #000000;
+}
+
+.ideasList {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.emptyState {
+  text-align: center;
+  opacity: 0.5;
+  padding: 3rem 0;
+  font-size: 1rem;
+}
+
+.ideaCard {
+  border: 2px solid #000000;
+  padding: 1.5rem;
+  background-color: #ffffff;
+  transition: all 0.2s ease;
+}
+
+.ideaCard:hover {
+  box-shadow: 4px 4px 0 #000000;
+  transform: translate(-2px, -2px);
+}
+
+.ideaHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.shortSummary {
+  flex: 1;
+  font-size: 1.1rem;
+  font-weight: bold;
+  margin: 0;
+  cursor: pointer;
+  line-height: 1.5;
+}
+
+.shortSummary:hover {
+  opacity: 0.7;
+}
+
+.deleteButton {
+  background: none;
+  border: 2px solid #000000;
+  color: #000000;
+  font-size: 1.5rem;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  line-height: 1;
+  transition: all 0.2s ease;
+  font-family: "Courier New", Courier, monospace;
+}
+
+.deleteButton:hover {
+  background-color: #000000;
+  color: #ffffff;
+}
+
+.fullDescription {
+  margin-bottom: 1rem;
+  padding: 1rem;
+  border-left: 3px solid #000000;
+  line-height: 1.6;
+  opacity: 0.8;
+}
+
+.ideaFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+  opacity: 0.6;
+}
+
+.timestamp {
+  font-size: 0.85rem;
+}
+
+.expandButton {
+  background: none;
+  border: 1px solid #000000;
+  color: #000000;
+  padding: 0.4rem 1rem;
+  cursor: pointer;
+  font-family: "Courier New", Courier, monospace;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  transition: all 0.2s ease;
+}
+
+.expandButton:hover {
+  background-color: #000000;
+  color: #ffffff;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .main {
+    padding: 1rem;
+  }
+
+  .title {
+    font-size: 2rem;
+  }
+
+  .recordButton {
+    width: 100%;
+    padding: 1.2rem 2rem;
+    font-size: 1rem;
+  }
+
+  .ideaCard {
+    padding: 1rem;
+  }
+
+  .shortSummary {
+    font-size: 1rem;
+  }
+}

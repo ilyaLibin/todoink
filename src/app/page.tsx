@@ -38,6 +38,11 @@ export default function Home() {
             <span className={styles.projectIcon}>🎵</span>
             <span className={styles.projectTitle}>Music Square</span>
           </Link>
+
+          <Link href="/mantra" className={styles.projectCard}>
+            <span className={styles.projectIcon}>💭</span>
+            <span className={styles.projectTitle}>Mantra</span>
+          </Link>
         </div>
       </div>
     </main>
