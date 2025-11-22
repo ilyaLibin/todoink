@@ -2,71 +2,70 @@
 
 import { useState, useRef, useEffect } from "react";
 import styles from "./page.module.css";
-import { Todo, List, defaultTodos, defaultLists } from "../../data/defaultData";
+interface Todo {
+  id: number;
+  text: string;
+  completed: boolean;
+}
 import { Logo } from "../../components/Logo";
 import { MobileSplash } from "../../components/MobileSplash";
 import { RecordingLight } from "../../components/RecordingLight";
 import { Footer } from "../../components/Footer";
 
-const RECORDING_DELAY_MS = 200;
+const RECORDING_DELAY_MS = 300;
+const MAX_RECORDING_MS = 5000;
 
 export default function Home() {
   const [todos, setTodos] = useState<Todo[]>([]);
-  const [lists, setLists] = useState<List[]>([]);
-  const [currentList, setCurrentList] = useState(1);
+  const [listName, setListName] = useState("Groceries");
+  const [cursorIndex, setCursorIndex] = useState(0);
   const [recording, setRecording] = useState(false);
   const [isBlinking, setIsBlinking] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isRecordingListName, setIsRecordingListName] = useState(false);
   const [modelLoading, setModelLoading] = useState(true);
   const [modelReady, setModelReady] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editText, setEditText] = useState("");
   const pressTimer = useRef<NodeJS.Timeout | null>(null);
+  const recordingTimeout = useRef<NodeJS.Timeout | null>(null);
   const mediaRecorder = useRef<MediaRecorder | null>(null);
   const audioChunks = useRef<Blob[]>([]);
-  const activeButtonIndex = useRef<number>(-1);
-  const activeListId = useRef<number | null>(null);
   const clickSound = useRef<HTMLAudioElement | null>(null);
   const workerRef = useRef<Worker | null>(null);
+  const isLongPress = useRef(false);
+  const shouldMoveCursorToEnd = useRef(false);
 
-  // Initialize from localStorage or default data
+  // Initialize from localStorage
   useEffect(() => {
     if (typeof window !== "undefined") {
       try {
-        const savedTodos = localStorage.getItem("todos");
-        const savedLists = localStorage.getItem("lists");
-
+        const savedTodos = localStorage.getItem("todoink2_todos");
+        const savedListName = localStorage.getItem("todoink2_listName");
         if (savedTodos) {
           setTodos(JSON.parse(savedTodos));
-        } else {
-          setTodos(defaultTodos);
         }
-
-        if (savedLists) {
-          setLists(JSON.parse(savedLists));
-        } else {
-          setLists(defaultLists);
+        if (savedListName) {
+          setListName(savedListName);
         }
       } catch {
-        // If there's an error, use default data
-        setTodos(defaultTodos);
-        setLists(defaultLists);
+        // Silent error handling
       }
     }
   }, []);
 
-  // Save to localStorage when todos or lists change
+  // Save to localStorage when todos or listName change
   useEffect(() => {
     if (typeof window !== "undefined" && todos.length > 0) {
-      localStorage.setItem("todos", JSON.stringify(todos));
+      localStorage.setItem("todoink2_todos", JSON.stringify(todos));
     }
   }, [todos]);
 
   useEffect(() => {
-    if (typeof window !== "undefined" && lists.length > 0) {
-      localStorage.setItem("lists", JSON.stringify(lists));
+    if (typeof window !== "undefined" && listName) {
+      localStorage.setItem("todoink2_listName", listName);
     }
-  }, [lists]);
+  }, [listName]);
 
   // Initialize click sound, transcription worker, and request mic permission
   useEffect(() => {
@@ -101,23 +100,14 @@ export default function Home() {
             setIsBlinking(true);
             setTimeout(() => setIsBlinking(false), 1000);
 
-            if (isRecordingListName && activeListId.current) {
-              updateListName(activeListId.current, text.trim());
-            } else if (activeButtonIndex.current !== -1) {
-              addOrUpdateTodo(text.trim(), activeButtonIndex.current);
-            }
+            // Add new todo at the end and move cursor to it
+            addNewTodo(text.trim());
 
             setRecording(false);
-            setIsRecordingListName(false);
-            activeButtonIndex.current = -1;
-            activeListId.current = null;
           } else if (status === "error") {
             console.error("Transcription error:", error);
             setError(error || "Transcription failed");
             setRecording(false);
-            setIsRecordingListName(false);
-            activeButtonIndex.current = -1;
-            activeListId.current = null;
           }
         };
 
@@ -128,7 +118,6 @@ export default function Home() {
         navigator.mediaDevices
           .getUserMedia({ audio: true })
           .then((stream) => {
-            // Stop the stream immediately since we only needed permission
             stream.getTracks().forEach((track) => track.stop());
           })
           .catch((error) => {
@@ -140,7 +129,6 @@ export default function Home() {
       }
     }
 
-    // Cleanup worker on unmount
     return () => {
       if (workerRef.current) {
         workerRef.current.terminate();
@@ -162,73 +150,115 @@ export default function Home() {
     }
   };
 
-  // Filter todos by current list
-  const currentTodos = todos.filter((todo) => todo.listId === currentList);
-  const currentListName =
-    lists.find((list) => list.id === currentList)?.name ||
-    `List ${currentList}`;
-
-  const addOrUpdateTodo = (text: string, index: number) => {
-    setTodos((prev) => {
-      const currentListTodos = prev.filter(
-        (todo) => todo.listId === currentList
-      );
-      const otherTodos = prev.filter((todo) => todo.listId !== currentList);
-
-      // If there's an existing todo at this position, update it
-      if (index < currentListTodos.length) {
-        return [
-          ...otherTodos,
-          ...currentListTodos.map((todo, i) =>
-            i === index ? { ...todo, text, completed: false } : todo
-          ),
-        ];
-      }
-
-      // If it's a new position, add it to the end of current list's todos
-      return [
-        ...prev,
-        {
-          id: Date.now(),
-          text,
-          completed: false,
-          listId: currentList,
-        },
-      ];
-    });
+  // Add new todo at the end
+  const addNewTodo = (text: string) => {
+    shouldMoveCursorToEnd.current = true;
+    setTodos((prev) => [
+      ...prev,
+      {
+        id: Date.now(),
+        text,
+        completed: false,
+      },
+    ]);
   };
 
-  const handleButtonClick = (index: number) => {
-    playClickSound();
-    const todoIndex = currentTodos[index]?.id;
-    if (todoIndex) {
+  // Toggle completion of todo at cursor
+  const toggleTodoAtCursor = () => {
+    const todo = todos[cursorIndex];
+    if (todo) {
       setTodos((prevTodos) =>
-        prevTodos.map((todo) =>
-          todo.id === todoIndex ? { ...todo, completed: !todo.completed } : todo
+        prevTodos.map((t) =>
+          t.id === todo.id ? { ...t, completed: !t.completed } : t
         )
       );
     }
   };
 
-  const handleButtonDoubleClick = (index: number) => {
-    playClickSound();
-    const todoIndex = currentTodos[index]?.id;
-    if (todoIndex) {
-      setTodos((prevTodos) =>
-        prevTodos.filter((todo) => todo.id !== todoIndex)
-      );
+  // Delete todo at cursor
+  const deleteTodoAtCursor = () => {
+    const todo = todos[cursorIndex];
+    if (todo) {
+      setTodos((prevTodos) => prevTodos.filter((t) => t.id !== todo.id));
+      // Adjust cursor if needed
+      if (cursorIndex >= todos.length - 1 && cursorIndex > 0) {
+        setCursorIndex(cursorIndex - 1);
+      }
     }
   };
 
-  const updateListName = (listId: number, newName: string) => {
-    setLists((prev) =>
-      prev.map((list) =>
-        list.id === listId ? { ...list, name: newName } : list
-      )
+  // Navigation handlers
+  const handleUp = () => {
+    playClickSound();
+    setCursorIndex((prev) => (prev > 0 ? prev - 1 : prev));
+  };
+
+  const handleDown = () => {
+    playClickSound();
+    setCursorIndex((prev) =>
+      prev < todos.length - 1 ? prev + 1 : prev
     );
   };
 
-  const startRecording = async (forListName: boolean = false) => {
+  // Record button handlers
+  const handleRecordClick = () => {
+    if (isLongPress.current) {
+      isLongPress.current = false;
+      return;
+    }
+    playClickSound();
+    toggleTodoAtCursor();
+  };
+
+  const handleRecordDoubleClick = () => {
+    playClickSound();
+    deleteTodoAtCursor();
+  };
+
+  // Edit mode handlers
+  const openEditMode = () => {
+    const titleLine = `#${listName}`;
+    const todoLines = todos.map((t) => (t.completed ? `[x] ${t.text}` : t.text)).join("\n");
+    setEditText(titleLine + (todoLines ? "\n" + todoLines : ""));
+    setIsEditMode(true);
+  };
+
+  const saveEditMode = () => {
+    const lines = editText.split("\n");
+
+    // Parse title from first line if it starts with #
+    let newListName = listName;
+    let todoLines = lines;
+
+    if (lines[0]?.trim().startsWith("#")) {
+      newListName = lines[0].trim().slice(1).trim() || "Groceries";
+      todoLines = lines.slice(1);
+    }
+
+    // Parse todos from remaining lines
+    const newTodos: Todo[] = todoLines
+      .filter((line) => line.trim() !== "")
+      .map((line, index) => {
+        const isCompleted = line.startsWith("[x] ");
+        const text = isCompleted ? line.slice(4) : line;
+        return {
+          id: todos[index]?.id || Date.now() + index,
+          text: text.trim(),
+          completed: isCompleted,
+        };
+      });
+
+    setListName(newListName);
+    setTodos(newTodos);
+    setCursorIndex(0);
+    setIsEditMode(false);
+  };
+
+  const cancelEditMode = () => {
+    setIsEditMode(false);
+  };
+
+  const startRecording = async () => {
     try {
       setError(null);
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -249,7 +279,7 @@ export default function Home() {
             throw new Error("Worker not initialized");
           }
 
-          // Decode audio using AudioContext (available in main thread)
+          // Decode audio using AudioContext
           const arrayBuffer = await audioBlob.arrayBuffer();
           const audioContext = new AudioContext({ sampleRate: 16000 });
           const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
@@ -257,7 +287,6 @@ export default function Home() {
           // Get audio data as Float32Array
           let audio: Float32Array;
           if (audioBuffer.numberOfChannels === 2) {
-            // Convert stereo to mono by averaging channels
             const left = audioBuffer.getChannelData(0);
             const right = audioBuffer.getChannelData(1);
             audio = new Float32Array(left.length);
@@ -265,7 +294,6 @@ export default function Home() {
               audio[i] = (left[i] + right[i]) / 2;
             }
           } else {
-            // Already mono
             audio = audioBuffer.getChannelData(0);
           }
 
@@ -277,38 +305,28 @@ export default function Home() {
             error instanceof Error ? error.message : "Transcription failed"
           );
           setRecording(false);
-          setIsRecordingListName(false);
-          activeButtonIndex.current = -1;
-          activeListId.current = null;
         }
       };
 
       mediaRecorder.current = recorder;
       recorder.start();
       setRecording(true);
-      if (forListName) {
-        setIsRecordingListName(true);
-      }
+
+      // Auto-stop after MAX_RECORDING_MS
+      recordingTimeout.current = setTimeout(() => {
+        stopRecording();
+      }, MAX_RECORDING_MS);
     } catch (error) {
       console.error("Recording error:", error);
       setError("Could not access microphone");
       setRecording(false);
-      setIsRecordingListName(false);
-      activeButtonIndex.current = -1;
-      activeListId.current = null;
     }
   };
 
-  const handleButtonPress = (index: number) => {
-    activeButtonIndex.current = index;
-    pressTimer.current = setTimeout(() => {
-      startRecording(false);
-    }, RECORDING_DELAY_MS);
-  };
-
-  const handleButtonRelease = () => {
-    if (pressTimer.current) {
-      clearTimeout(pressTimer.current);
+  const stopRecording = () => {
+    if (recordingTimeout.current) {
+      clearTimeout(recordingTimeout.current);
+      recordingTimeout.current = null;
     }
     if (recording && mediaRecorder.current) {
       mediaRecorder.current.stop();
@@ -316,10 +334,22 @@ export default function Home() {
     }
   };
 
-  const handleListChange = (listId: number) => {
-    playClickSound();
-    setCurrentList(listId);
-    setError(null);
+  const handleRecordPress = () => {
+    isLongPress.current = false;
+    pressTimer.current = setTimeout(() => {
+      isLongPress.current = true;
+      startRecording();
+    }, RECORDING_DELAY_MS);
+  };
+
+  const handleRecordRelease = () => {
+    if (pressTimer.current) {
+      clearTimeout(pressTimer.current);
+      pressTimer.current = null;
+    }
+    if (recording) {
+      stopRecording();
+    }
   };
 
   // Clear error after 5 seconds
@@ -344,6 +374,9 @@ export default function Home() {
       if (pressTimer.current) {
         clearTimeout(pressTimer.current);
       }
+      if (recordingTimeout.current) {
+        clearTimeout(recordingTimeout.current);
+      }
       if (mediaRecorder.current) {
         mediaRecorder.current.stream
           .getTracks()
@@ -351,6 +384,16 @@ export default function Home() {
       }
     };
   }, []);
+
+  // Move cursor to end when new item added, or keep in bounds
+  useEffect(() => {
+    if (shouldMoveCursorToEnd.current && todos.length > 0) {
+      setCursorIndex(todos.length - 1);
+      shouldMoveCursorToEnd.current = false;
+    } else if (cursorIndex >= todos.length && todos.length > 0) {
+      setCursorIndex(todos.length - 1);
+    }
+  }, [todos.length, cursorIndex]);
 
   return (
     <main className={styles.main}>
@@ -361,108 +404,175 @@ export default function Home() {
       </div>
       <h1 className={styles.mainTitle}>E-Ink Todo List</h1>
 
-      <div>
+      <div className={styles.deviceContainer}>
+        {/* Legend */}
+        <div className={styles.legend}>
+          <h2 className={styles.legendTitle}>Controls</h2>
+          <ul className={styles.legendList}>
+            <li className={styles.legendItem}>
+              <span className={styles.legendIcon}>▲</span>
+              <div>
+                <span className={styles.legendAction}>Up</span>
+                <p className={styles.legendDesc}>Move cursor up</p>
+              </div>
+            </li>
+            <li className={styles.legendItem}>
+              <span className={styles.legendIcon}>▼</span>
+              <div>
+                <span className={styles.legendAction}>Down</span>
+                <p className={styles.legendDesc}>Move cursor down</p>
+              </div>
+            </li>
+            <li className={styles.legendItem}>
+              <span className={styles.legendIcon}>●</span>
+              <div>
+                <span className={styles.legendAction}>Record</span>
+                <p className={styles.legendDesc}>
+                  Click: check/uncheck<br />
+                  Double: delete<br />
+                  Hold: voice input
+                </p>
+              </div>
+            </li>
+          </ul>
+        </div>
+
         {/* Device Frame */}
         <div className={styles.deviceFrame}>
-          {/* Side Buttons */}
-          <div className={styles.leftFrame}>
-            {Array.from({ length: 8 }, (_, i) => (
-              <div key={i} className={styles.buttonWrapper}>
-                <button
-                  onClick={() => handleButtonClick(i)}
-                  onDoubleClick={() => handleButtonDoubleClick(i)}
-                  onMouseDown={() => handleButtonPress(i)}
-                  onMouseUp={handleButtonRelease}
-                  onMouseLeave={handleButtonRelease}
-                  className={styles.physicalButton}
-                  aria-label={`Task ${i + 1} button`}
-                  data-tooltip={`- Hold and speak to add/edit\n- Double click to delete\n- Single click to check/uncheck`}
-                />
-              </div>
-            ))}
-          </div>
-
           {/* Recording Light */}
           <RecordingLight recording={recording} isBlinking={isBlinking} />
 
           {/* Main Content */}
           <div className={styles.mainContent}>
             {/* E-ink Display Container */}
-            <div className={styles.displayContainer}>
+            <div
+              className={styles.displayContainer}
+              onDoubleClick={openEditMode}
+            >
+              {/* Edit Mode Modal */}
+              {isEditMode && (
+                <div className={styles.editModal} onClick={(e) => e.stopPropagation()}>
+                  <div className={styles.editHeader}>
+                    <span>Edit List</span>
+                    <span className={styles.editHint}>#Title, [x] completed</span>
+                  </div>
+                  <textarea
+                    className={styles.editTextarea}
+                    value={editText}
+                    onChange={(e) => setEditText(e.target.value)}
+                    autoFocus
+                    placeholder="#List Name&#10;Item 1&#10;[x] Completed item"
+                  />
+                  <div className={styles.editButtons}>
+                    <button
+                      className={styles.editButton}
+                      onClick={cancelEditMode}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      className={`${styles.editButton} ${styles.editButtonPrimary}`}
+                      onClick={saveEditMode}
+                    >
+                      Save
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* E-ink display */}
               <div className={styles.einkDisplay}>
-                <h1 className={styles.listTitle}>{currentListName}</h1>
+                <h1 className={styles.listTitle}>{listName}</h1>
                 {/* Todo items */}
-                {currentTodos.map((todo) => (
+                {todos.map((todo, index) => (
                   <div
                     key={todo.id}
                     className={`${styles.todoItem} ${
                       todo.completed ? styles.completed : ""
-                    }`}
+                    } ${index === cursorIndex ? styles.selected : ""}`}
                   >
-                    {todo.text || "Empty item..."}
+                    <span className={styles.cursor}>
+                      {index === cursorIndex ? ">" : "\u00A0"}
+                    </span>
+                    <span className={styles.checkbox}>
+                      {todo.completed ? "☑" : "☐"}
+                    </span>
+                    <span className={styles.todoText}>
+                      {todo.text || "Empty item..."}
+                    </span>
                   </div>
                 ))}
+                {todos.length === 0 && (
+                  <div className={styles.emptyState}>
+                    No items yet. Hold the record button to add one.
+                  </div>
+                )}
               </div>
 
               {/* Summary bar */}
               <div className={styles.summaryBar}>
-                {currentTodos.filter((todo) => todo.completed).length} of{" "}
-                {currentTodos.length} items completed
+                {todos.filter((todo) => todo.completed).length} of{" "}
+                {todos.length} completed
               </div>
             </div>
           </div>
 
-          {/* Bottom Frame with Buttons */}
+          {/* Bottom Buttons */}
           <div className={styles.bottomButtons}>
             <button
-              onClick={() =>
-                handleListChange(
-                  currentList > 1 ? currentList - 1 : lists.length
-                )
-              }
-              className={styles.arrowButton}
-              aria-label="Previous list"
-              data-tooltip="Click to switch to previous list"
+              onClick={handleUp}
+              className={styles.controlButton}
+              aria-label="Move cursor up"
+              data-tooltip="Move up"
             >
-              ←
+              ▲
             </button>
             <button
-              onClick={() =>
-                handleListChange(
-                  currentList < lists.length ? currentList + 1 : 1
-                )
-              }
-              className={styles.arrowButton}
-              aria-label="Next list"
-              data-tooltip="Click to switch to next list"
+              onClick={handleRecordClick}
+              onDoubleClick={handleRecordDoubleClick}
+              onMouseDown={handleRecordPress}
+              onMouseUp={handleRecordRelease}
+              onMouseLeave={handleRecordRelease}
+              onTouchStart={handleRecordPress}
+              onTouchEnd={handleRecordRelease}
+              className={`${styles.controlButton} ${styles.recordButton} ${
+                recording ? styles.recording : ""
+              }`}
+              aria-label="Record or toggle"
+              data-tooltip="Click: check/uncheck | Double: delete | Hold: record"
             >
-              →
+              ●
+            </button>
+            <button
+              onClick={handleDown}
+              className={styles.controlButton}
+              aria-label="Move cursor down"
+              data-tooltip="Move down"
+            >
+              ▼
             </button>
           </div>
 
           {(recording || error || modelLoading) && (
             <div
-              className={`fixed top-4 right-4 px-4 py-2 rounded ${
+              className={`${styles.statusBadge} ${
                 error
-                  ? "bg-red-500"
+                  ? styles.statusError
                   : modelLoading
-                  ? "bg-yellow-500"
-                  : "bg-blue-500"
-              } text-white shadow-lg min-w-[200px]`}
+                  ? styles.statusLoading
+                  : styles.statusRecording
+              }`}
             >
               <div>
                 {error ||
                   (modelLoading
-                    ? `Loading AI model... ${loadingProgress}%`
-                    : isRecordingListName
-                    ? "Recording list name..."
+                    ? `Loading AI... ${loadingProgress}%`
                     : "Recording...")}
               </div>
               {modelLoading && !error && (
-                <div className="mt-2 w-full bg-white/30 rounded-full h-2 overflow-hidden">
+                <div className={styles.progressBar}>
                   <div
-                    className="bg-white h-full transition-all duration-300 ease-out"
+                    className={styles.progressFill}
                     style={{ width: `${loadingProgress}%` }}
                   />
                 </div>
@@ -471,12 +581,38 @@ export default function Home() {
           )}
 
           {modelReady && !recording && !error && (
-            <div className="fixed top-4 right-4 px-4 py-2 rounded bg-green-500 text-white shadow-lg animate-pulse">
-              Ready to record!
-            </div>
+            <div className={styles.statusReady}>Ready to record!</div>
           )}
         </div>
       </div>
+
+      {/* Mocks Gallery Section */}
+      <section className={styles.mocksSection}>
+        <h2 className={styles.mocksTitle}>Product Mocks</h2>
+        <div className={styles.mocksGallery}>
+          <div className={styles.mockItem}>
+            <img
+              src="/groceries_fridge.jpg"
+              alt="E-ink grocery list on fridge"
+              className={styles.mockImage}
+            />
+          </div>
+          <div className={styles.mockItem}>
+            <img
+              src="/mock_desk.jpg"
+              alt="E-ink todo list on desk"
+              className={styles.mockImage}
+            />
+          </div>
+          <div className={styles.mockItem}>
+            <img
+              src="/groceries_work.jpg"
+              alt="E-ink todo list on desk"
+              className={styles.mockImage}
+            />
+          </div>
+        </div>
+      </section>
 
       <Footer />
     </main>
