@@ -17,6 +17,7 @@ const MAX_RECORDING_MS = 5000;
 
 export default function Home() {
   const [todos, setTodos] = useState<Todo[]>([]);
+  const [listName, setListName] = useState("Groceries");
   const [cursorIndex, setCursorIndex] = useState(0);
   const [recording, setRecording] = useState(false);
   const [isBlinking, setIsBlinking] = useState(false);
@@ -39,9 +40,13 @@ export default function Home() {
   useEffect(() => {
     if (typeof window !== "undefined") {
       try {
-        const savedTodos = localStorage.getItem("groceries");
+        const savedTodos = localStorage.getItem("todoink2_todos");
+        const savedListName = localStorage.getItem("todoink2_listName");
         if (savedTodos) {
           setTodos(JSON.parse(savedTodos));
+        }
+        if (savedListName) {
+          setListName(savedListName);
         }
       } catch {
         // Silent error handling
@@ -49,12 +54,18 @@ export default function Home() {
     }
   }, []);
 
-  // Save to localStorage when todos change
+  // Save to localStorage when todos or listName change
   useEffect(() => {
     if (typeof window !== "undefined" && todos.length > 0) {
-      localStorage.setItem("groceries", JSON.stringify(todos));
+      localStorage.setItem("todoink2_todos", JSON.stringify(todos));
     }
   }, [todos]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && listName) {
+      localStorage.setItem("todoink2_listName", listName);
+    }
+  }, [listName]);
 
   // Initialize click sound, transcription worker, and request mic permission
   useEffect(() => {
@@ -139,9 +150,6 @@ export default function Home() {
     }
   };
 
-  // List name
-  const listName = "Groceries";
-
   // Add new todo at the end
   const addNewTodo = (text: string) => {
     shouldMoveCursorToEnd.current = true;
@@ -209,22 +217,38 @@ export default function Home() {
 
   // Edit mode handlers
   const openEditMode = () => {
-    const text = todos.map((t) => (t.completed ? `[x] ${t.text}` : t.text)).join("\n");
-    setEditText(text);
+    const titleLine = `#${listName}`;
+    const todoLines = todos.map((t) => (t.completed ? `[x] ${t.text}` : t.text)).join("\n");
+    setEditText(titleLine + (todoLines ? "\n" + todoLines : ""));
     setIsEditMode(true);
   };
 
   const saveEditMode = () => {
-    const lines = editText.split("\n").filter((line) => line.trim() !== "");
-    const newTodos: Todo[] = lines.map((line, index) => {
-      const isCompleted = line.startsWith("[x] ");
-      const text = isCompleted ? line.slice(4) : line;
-      return {
-        id: todos[index]?.id || Date.now() + index,
-        text: text.trim(),
-        completed: isCompleted,
-      };
-    });
+    const lines = editText.split("\n");
+
+    // Parse title from first line if it starts with #
+    let newListName = listName;
+    let todoLines = lines;
+
+    if (lines[0]?.trim().startsWith("#")) {
+      newListName = lines[0].trim().slice(1).trim() || "Groceries";
+      todoLines = lines.slice(1);
+    }
+
+    // Parse todos from remaining lines
+    const newTodos: Todo[] = todoLines
+      .filter((line) => line.trim() !== "")
+      .map((line, index) => {
+        const isCompleted = line.startsWith("[x] ");
+        const text = isCompleted ? line.slice(4) : line;
+        return {
+          id: todos[index]?.id || Date.now() + index,
+          text: text.trim(),
+          completed: isCompleted,
+        };
+      });
+
+    setListName(newListName);
     setTodos(newTodos);
     setCursorIndex(0);
     setIsEditMode(false);
@@ -427,17 +451,17 @@ export default function Home() {
             >
               {/* Edit Mode Modal */}
               {isEditMode && (
-                <div className={styles.editModal}>
+                <div className={styles.editModal} onClick={(e) => e.stopPropagation()}>
                   <div className={styles.editHeader}>
                     <span>Edit List</span>
-                    <span className={styles.editHint}>One item per line. Prefix with [x] for completed.</span>
+                    <span className={styles.editHint}>#Title, [x] completed</span>
                   </div>
                   <textarea
                     className={styles.editTextarea}
                     value={editText}
                     onChange={(e) => setEditText(e.target.value)}
                     autoFocus
-                    placeholder="Enter items, one per line..."
+                    placeholder="#List Name&#10;Item 1&#10;[x] Completed item"
                   />
                   <div className={styles.editButtons}>
                     <button
@@ -575,15 +599,15 @@ export default function Home() {
           </div>
           <div className={styles.mockItem}>
             <img
-              src="/groceries_fridge.jpg"
-              alt="E-ink grocery list on fridge"
+              src="/mock_desk.jpg"
+              alt="E-ink todo list on desk"
               className={styles.mockImage}
             />
           </div>
           <div className={styles.mockItem}>
             <img
-              src="/groceries_fridge.jpg"
-              alt="E-ink grocery list on fridge"
+              src="/groceries_work.jpg"
+              alt="E-ink todo list on desk"
               className={styles.mockImage}
             />
           </div>
