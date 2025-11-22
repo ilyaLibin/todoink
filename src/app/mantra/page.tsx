@@ -14,6 +14,7 @@ export default function Mantra() {
   const [llmModelLoading, setLlmModelLoading] = useState(true);
   const [sttProgress, setSttProgress] = useState(0);
   const [llmProgress, setLlmProgress] = useState(0);
+  const [textInput, setTextInput] = useState("");
 
   const mediaRecorder = useRef<MediaRecorder | null>(null);
   const audioChunks = useRef<Blob[]>([]);
@@ -222,6 +223,16 @@ export default function Mantra() {
     setIdeas((prev) => prev.filter((idea) => idea.id !== id));
   };
 
+  const handleTextSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!textInput.trim() || !llmWorkerRef.current || llmModelLoading) return;
+
+    setError(null);
+    setProcessing(true);
+    llmWorkerRef.current.postMessage({ transcription: textInput.trim() });
+    setTextInput("");
+  };
+
   // Clear error after 5 seconds
   useEffect(() => {
     if (error) {
@@ -265,6 +276,27 @@ export default function Mantra() {
           Hold the button and speak your idea
         </p>
       </div>
+
+      {/* Text Input */}
+      <div className={styles.divider}>or</div>
+
+      <form onSubmit={handleTextSubmit} className={styles.textSection}>
+        <textarea
+          className={styles.textInput}
+          value={textInput}
+          onChange={(e) => setTextInput(e.target.value)}
+          placeholder="Type your idea here..."
+          disabled={llmModelLoading || processing}
+          rows={4}
+        />
+        <button
+          type="submit"
+          className={styles.submitButton}
+          disabled={!textInput.trim() || llmModelLoading || processing}
+        >
+          {processing ? "Processing..." : "Submit"}
+        </button>
+      </form>
 
       {/* Loading Progress */}
       {isLoading && (

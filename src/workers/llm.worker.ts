@@ -53,14 +53,8 @@ async function extractIdeas(transcription: string) {
     const prompt = `You are an assistant that extracts and refines key ideas from voice transcriptions.
 
 Your task:
-1. Remove all filler words (like, you know, um, uh, etc.)
-2. Clean up the language to be clear and concise
-3. Extract the CORE IDEA, not just rewrite the speech
-4. Write in a natural, written style (not spoken style)
-
-Given this voice transcription, extract:
-1. A short summary in maximum 10 words - capture the essence
-2. A detailed description (2-4 sentences) - explain the full idea clearly
+Write a main sentance of this issey and explain the main idea in your own words
+Write a title the main idea of it up to 10 words
 
 Voice transcription: "${transcription}"
 
