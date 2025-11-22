@@ -24,6 +24,8 @@ export default function Home() {
   const [modelLoading, setModelLoading] = useState(true);
   const [modelReady, setModelReady] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editText, setEditText] = useState("");
   const pressTimer = useRef<NodeJS.Timeout | null>(null);
   const recordingTimeout = useRef<NodeJS.Timeout | null>(null);
   const mediaRecorder = useRef<MediaRecorder | null>(null);
@@ -203,6 +205,33 @@ export default function Home() {
   const handleRecordDoubleClick = () => {
     playClickSound();
     deleteTodoAtCursor();
+  };
+
+  // Edit mode handlers
+  const openEditMode = () => {
+    const text = todos.map((t) => (t.completed ? `[x] ${t.text}` : t.text)).join("\n");
+    setEditText(text);
+    setIsEditMode(true);
+  };
+
+  const saveEditMode = () => {
+    const lines = editText.split("\n").filter((line) => line.trim() !== "");
+    const newTodos: Todo[] = lines.map((line, index) => {
+      const isCompleted = line.startsWith("[x] ");
+      const text = isCompleted ? line.slice(4) : line;
+      return {
+        id: todos[index]?.id || Date.now() + index,
+        text: text.trim(),
+        completed: isCompleted,
+      };
+    });
+    setTodos(newTodos);
+    setCursorIndex(0);
+    setIsEditMode(false);
+  };
+
+  const cancelEditMode = () => {
+    setIsEditMode(false);
   };
 
   const startRecording = async () => {
@@ -392,7 +421,41 @@ export default function Home() {
           {/* Main Content */}
           <div className={styles.mainContent}>
             {/* E-ink Display Container */}
-            <div className={styles.displayContainer}>
+            <div
+              className={styles.displayContainer}
+              onDoubleClick={openEditMode}
+            >
+              {/* Edit Mode Modal */}
+              {isEditMode && (
+                <div className={styles.editModal}>
+                  <div className={styles.editHeader}>
+                    <span>Edit List</span>
+                    <span className={styles.editHint}>One item per line. Prefix with [x] for completed.</span>
+                  </div>
+                  <textarea
+                    className={styles.editTextarea}
+                    value={editText}
+                    onChange={(e) => setEditText(e.target.value)}
+                    autoFocus
+                    placeholder="Enter items, one per line..."
+                  />
+                  <div className={styles.editButtons}>
+                    <button
+                      className={styles.editButton}
+                      onClick={cancelEditMode}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      className={`${styles.editButton} ${styles.editButtonPrimary}`}
+                      onClick={saveEditMode}
+                    >
+                      Save
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* E-ink display */}
               <div className={styles.einkDisplay}>
                 <h1 className={styles.listTitle}>{listName}</h1>
